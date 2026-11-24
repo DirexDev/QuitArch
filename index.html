@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>QuitArch-Info</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=IM+Fell+English:ital@0;1&family=Uncial+Antiqua&display=swap" rel="stylesheet" />
+<style>
+:root{
+  color-scheme:dark;
+  --bg:#090d16;--fg:#e8eef6;--muted:#a9b9d0;--line:rgba(212,172,92,.30);--gold:#d4ac5c;--gold2:#f3dfb3;
+  --link:#f3dfb3;--link-v:#c9b0e8;--url:#5cd4a8;--field:rgba(8,12,20,.94);--panel:rgba(14,20,32,.90);
+  --hover:rgba(212,172,92,.12);--chip:rgba(20,30,48,.88);--accent:#e7c67c;--scrim:rgba(4,6,12,.78);
+  --display:"Uncial Antiqua","Cinzel","Palatino Linotype",Georgia,serif;--caps:"Cinzel",Georgia,serif;--text:"IM Fell English","Palatino Linotype",Georgia,serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;min-height:100%;background:var(--bg);color:var(--fg);font-family:var(--text);font-size:17px;line-height:1.55}
+button,select,input{font-family:inherit}
+:focus-visible{outline:2px solid var(--gold);outline-offset:2px}
+.bg-layer{position:fixed;inset:0;z-index:0;pointer-events:none}
+.bg-layer canvas{display:block;width:100%;height:100%}
+.topbar{position:fixed;top:0;right:0;padding:14px 20px;z-index:8}
+select{background:var(--chip);color:var(--gold);border:1px solid var(--line);border-radius:4px;padding:6px 10px;font-size:13px;font-family:var(--caps);cursor:pointer}
+select:hover{background:rgba(30,44,70,.95)}
+
+.page{position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;align-items:center}
+.home .hero{margin-top:18vh;width:100%;display:flex;flex-direction:column;align-items:center;padding:0 16px;text-align:center}
+.logo{margin:0;font-family:var(--display);font-weight:400;letter-spacing:2px;line-height:1.1;cursor:pointer;user-select:none;white-space:nowrap;
+  color:var(--gold2);text-shadow:0 2px 0 rgba(35,22,6,.95),0 6px 22px rgba(0,0,0,.75),0 0 28px rgba(212,172,92,.28)}
+.home .logo{font-size:clamp(36px,9vw,66px)}
+.results-mode .logo{font-size:26px}
+.orn{margin:6px 0 24px;display:flex;align-items:center;gap:14px;color:var(--gold);font-size:18px;width:100%;max-width:420px}
+.orn::before,.orn::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+
+.searchrow{position:relative;width:100%;max-width:604px}
+.field{display:flex;align-items:center;height:48px;border:1px solid rgba(212,172,92,.45);border-radius:6px;background:var(--field);padding:0 8px 0 16px;
+  box-shadow:0 10px 30px rgba(0,0,0,.55),inset 0 1px 0 rgba(255,255,255,.06);transition:border-color .15s,box-shadow .15s}
+.field:hover,.field:focus-within{border-color:var(--gold);box-shadow:0 10px 30px rgba(0,0,0,.55),0 0 0 2px rgba(212,172,92,.22)}
+.field.open{border-radius:6px 6px 0 0}
+.field input{flex:1;min-width:0;border:0;outline:0;background:transparent;color:#f2f6fc;font-size:18px;height:100%}
+.field input::placeholder{color:#7e92ad;font-style:italic}
+.field button{background:none;border:0;cursor:pointer;color:#9cb0c9;width:36px;height:36px;border-radius:4px;display:grid;place-items:center}
+.field button:hover{background:var(--hover)}
+.field svg{width:20px;height:20px;fill:currentColor}
+.field .go{color:var(--gold)}
+.sug{position:absolute;left:0;right:0;top:48px;margin:0;padding:4px 0 8px;list-style:none;background:rgba(10,15,26,.98);border:1px solid var(--gold);border-top:0;border-radius:0 0 6px 6px;z-index:6;display:none;box-shadow:0 14px 30px rgba(0,0,0,.6)}
+.sug.show{display:block}
+.sug li{padding:6px 16px;display:flex;gap:12px;align-items:center;cursor:pointer;font-size:17px;color:var(--gold2)}
+.sug li svg{width:15px;height:15px;fill:var(--gold);flex:none}
+.sug li:hover,.sug li.sel{background:var(--hover)}
+
+.btns{margin-top:24px;display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.btn{font-family:var(--caps);letter-spacing:.6px;font-size:14px;font-weight:700;height:38px;padding:0 22px;border-radius:4px;cursor:pointer;
+  color:#1c1408;background:linear-gradient(180deg,#e7c67c,#c49843);border:1px solid #f0d596;transition:filter .15s,transform .08s}
+.btn:hover{filter:brightness(1.08)}.btn:active{transform:translateY(1px)}
+.btn.alt{color:var(--gold);background:var(--chip);border:1px solid rgba(212,172,92,.4)}
+.btn.alt:hover{background:rgba(30,44,70,.95);filter:none}
+.hist{margin-top:28px;display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:604px}
+.pill{background:var(--chip);color:var(--gold2);border:1px solid var(--line);border-radius:3px;padding:3px 12px;font-size:15px;cursor:pointer}
+.pill:hover{background:rgba(30,44,70,.95);border-color:var(--gold)}
+
+.header{display:none;width:100%;align-items:center;gap:30px;padding:14px 20px 12px 24px;border-bottom:1px solid var(--gold);
+  position:sticky;top:0;background:rgba(9,13,22,.94);backdrop-filter:blur(6px);z-index:4;box-shadow:0 6px 20px rgba(0,0,0,.5)}
+.results-mode .header{display:flex}
+.results-mode .hero{display:none}
+.header .searchrow{max-width:692px;margin-right:110px}
+@media(max-width:700px){.header{flex-direction:column;align-items:flex-start;gap:10px;padding-top:50px}.header .searchrow{margin-right:0}}
+
+.main{width:100%;max-width:700px;padding:16px 20px 44px 24px;align-self:flex-start;margin-left:max(0px,calc((100vw - 1240px)/8))}
+@media(max-width:700px){.main{padding:12px 16px 40px;margin-left:0}}
+.count{font-family:var(--caps);font-size:12.5px;letter-spacing:.5px;color:var(--muted);margin:0 0 16px}
+.res{display:flex;gap:16px;justify-content:space-between;margin-bottom:14px;max-width:652px;padding:13px 16px;background:var(--panel);
+  border:1px solid var(--line);border-left:3px solid var(--gold);border-radius:4px;box-shadow:0 4px 14px rgba(0,0,0,.35)}
+.res .t{min-width:0}
+.crumb{font-family:var(--caps);font-size:11.5px;color:var(--url);margin-bottom:3px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.res h3{margin:0 0 4px;font-family:var(--caps);font-size:18px;font-weight:700;line-height:1.3}
+.res h3 button{all:unset;cursor:pointer;color:var(--link)}
+.res h3 button:hover{text-decoration:underline}
+.res.seen h3 button{color:var(--link-v)}
+.res p{margin:0;font-size:15.5px;color:#d7e2f0;line-height:1.5}
+.res img{flex:none;width:92px;height:92px;object-fit:cover;border-radius:3px;border:1px solid var(--line);cursor:pointer;background:#0b111d;filter:sepia(.25)}
+.empty{padding:26px 0;color:var(--muted);font-style:italic}
+.more{margin:6px 0 0;display:flex;justify-content:center;max-width:652px}
+
+dialog{border:3px double var(--gold);padding:0;border-radius:6px;color:var(--fg);width:min(800px,calc(100vw - 24px));max-height:calc(100vh - 28px);
+  background:radial-gradient(ellipse at top,#16223a 0%,#0d1424 55%,#080b13 100%);box-shadow:0 18px 60px rgba(0,0,0,.8),0 0 40px rgba(212,172,92,.12);overflow:hidden}
+dialog[open]{display:flex;flex-direction:column;animation:pop .2s ease-out}
+dialog::backdrop{background:var(--scrim);backdrop-filter:blur(3px)}
+@keyframes pop{from{opacity:0;transform:translateY(10px) scale(.98)}to{opacity:1;transform:none}}
+@media(prefers-reduced-motion:reduce){dialog[open]{animation:none}}
+.dh{display:flex;align-items:center;gap:12px;padding:14px 14px 12px 26px;border-bottom:1px solid var(--gold);position:relative}
+.dh::after{content:"✠";position:absolute;left:50%;bottom:-11px;transform:translateX(-50%);padding:0 10px;background:#0f182a;color:var(--gold);font-size:15px;line-height:20px}
+.dh h2{margin:0;flex:1;font-family:var(--display);font-weight:400;font-size:clamp(20px,3.4vw,28px);line-height:1.25;color:var(--gold2);text-shadow:0 2px 0 rgba(35,22,6,.9),0 0 18px rgba(212,172,92,.25)}
+.dh button{background:none;border:1px solid var(--line);width:38px;height:38px;border-radius:4px;cursor:pointer;color:var(--gold);display:grid;place-items:center}
+.dh button:hover{background:var(--hover);border-color:var(--gold)}
+.dh svg{width:20px;height:20px;fill:currentColor}
+.db{padding:28px 30px 28px;overflow:auto;font-family:var(--text);font-size:18px;line-height:1.7;color:#eef4fc}
+.db .lead{display:flow-root}
+.db .lead img{float:right;max-width:250px;width:36%;margin:4px 0 12px 22px;border:2px solid var(--gold);padding:3px;background:#0b111d;border-radius:2px;filter:sepia(.2)}
+.db p{margin:0 0 14px;white-space:pre-wrap;overflow-wrap:anywhere}
+.db p:first-of-type::first-letter{float:left;font-family:var(--display);font-size:3.6em;line-height:.82;padding:6px 10px 0 0;color:var(--gold);text-shadow:0 2px 0 rgba(35,22,6,.9),0 0 14px rgba(212,172,92,.3)}
+.db h3{clear:both;margin:26px 0 10px;font-family:var(--caps);font-size:17px;font-weight:700;letter-spacing:.8px;color:var(--gold2);padding-bottom:5px;
+  border-bottom:1px solid transparent;border-image:linear-gradient(90deg,var(--gold),transparent) 1}
+.db h3::before{content:"❦ ";color:var(--gold)}
+.db h4{margin:18px 0 6px;font-family:var(--caps);font-size:14.5px;font-weight:700;color:var(--gold)}
+.rel{margin-top:28px;padding-top:14px;border-top:1px solid var(--gold);position:relative}
+.rel b{display:block;font-family:var(--caps);font-size:12.5px;letter-spacing:.8px;margin-bottom:10px;font-weight:600;color:var(--muted)}
+.rel .chips{display:flex;flex-wrap:wrap;gap:8px}
+.loading{color:var(--muted);font-style:italic}
+@media(max-width:560px){.db{padding:18px}.db .lead img{float:none;display:block;width:100%;max-width:none;margin:0 0 14px}}
+</style>
+</head>
+<body>
+<div class="bg-layer" aria-hidden="true"><canvas id="bgCanvas"></canvas></div>
+<div class="topbar"><select id="langSel" aria-label="Język wyników">
+  <option value="pl">Polski</option><option value="en">English</option><option value="de">Deutsch</option>
+  <option value="fr">Français</option><option value="es">Español</option><option value="it">Italiano</option>
+  <option value="cs">Čeština</option><option value="uk">Українська</option><option value="ru">Русский</option>
+</select></div>
+
+<div id="page" class="page home">
+  <div class="hero">
+    <h1 class="logo" id="logoBig" aria-label="QuitArch-Info"></h1>
+    <div class="orn" aria-hidden="true">❧ ✠ ❧</div>
+    <div class="searchrow" id="rowBig"></div>
+    <div class="btns">
+      <button class="btn" id="goBtn" type="button">Szukaj</button>
+      <button class="btn alt" id="luckyBtn" type="button">Losowa informacja</button>
+    </div>
+    <div class="hist" id="hist"></div>
+  </div>
+  <div class="header">
+    <h1 class="logo" id="logoSmall" aria-label="QuitArch-Info"></h1>
+    <div class="searchrow" id="rowSmall"></div>
+  </div>
+  <main class="main" id="main" hidden>
+    <p class="count" id="count" role="status"></p>
+    <div id="list"></div>
+    <div class="more" id="more"></div>
+  </main>
+</div>
+
+<dialog id="dlg" aria-labelledby="dlgTitle">
+  <div class="dh"><h2 id="dlgTitle"></h2>
+    <button type="button" id="dlgClose" aria-label="Zamknij"><svg viewBox="0 0 24 24"><path d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19l5.6-5.6 5.6 5.6 1.4-1.4-5.6-5.6z"/></svg></button></div>
+  <div class="db" id="dlgBody"></div>
+</dialog>
+
+<script>
+const $=id=>document.getElementById(id);
+const mk=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!==undefined)e.textContent=x;return e;};
+const ICON_S='<svg viewBox="0 0 24 24"><path d="M15.5 14h-.8l-.3-.3A6.5 6.5 0 1 0 14 15.5l.3.3v.8l5 5 1.5-1.5-5-5zm-6 0a4.5 4.5 0 1 1 0-9 4.5 4.5 0 0 1 0 9z"/></svg>';
+const ICON_X='<svg viewBox="0 0 24 24"><path d="M19 6.4 17.6 5 12 10.6 6.4 5 5 6.4 10.6 12 5 17.6 6.4 19l5.6-5.6 5.6 5.6 1.4-1.4-5.6-5.6z"/></svg>';
+
+
+/* tło: kolumny bajtów w złocie na granatowym tle */
+(function(){
+  const cv=$("bgCanvas"),ctx=cv.getContext("2d");
+  const T=["RBF","TXT","BIN","U8","U16","STR","CRC","HDR"],B=["00","01","0A","1B","2A","41","42","46","52","7F","9E","C4","E0","FF"];
+  function draw(){
+    const w=cv.width=innerWidth,h=cv.height=innerHeight;
+    const g=ctx.createRadialGradient(w*.5,h*.42,40,w*.5,h*.5,Math.max(w,h)*.75);
+    g.addColorStop(0,"#152036");g.addColorStop(.55,"#0d1424");g.addColorStop(1,"#070a12");
+    ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+    const t=ctx.createRadialGradient(w*.5,h*.4,10,w*.5,h*.4,Math.min(w,h)*.45);
+    t.addColorStop(0,"rgba(212,172,92,0.11)");t.addColorStop(1,"rgba(0,0,0,0)");
+    ctx.fillStyle=t;ctx.fillRect(0,0,w,h);
+    const cw=78,rh=26;ctx.font="11px 'Courier New',Consolas,monospace";ctx.textBaseline="middle";
+    for(let r=0;r<Math.ceil(h/rh)+1;r++)for(let c=0;c<Math.ceil(w/cw)+1;c++){
+      const x=c*cw+10,y=r*rh+rh/2,s=r*73+c*19;
+      if((c+r)%4===0){ctx.fillStyle="rgba(227,198,124,0.13)";ctx.fillText("["+T[Math.abs(s*2654435761)%T.length]+"]",x,y);}
+      else if((c*3+r)%5===0){ctx.fillStyle="rgba(115,205,168,0.10)";ctx.fillText(String(Math.abs(s*13)%256).padStart(3,"0")+"b",x,y);}
+      else{ctx.fillStyle="rgba(145,175,215,0.10)";ctx.fillText("0x"+B[Math.abs(s*40503)%B.length],x,y);}
+    }
+  }
+  draw();addEventListener("resize",draw);
+})();
+
+/* logo */
+for(const id of ["logoBig","logoSmall"])for(const ch of "QuitArch-Info"){const s=document.createElement("span");s.textContent=ch;$(id).appendChild(s);}
+
+/* pole wyszukiwania (dwie kopie: strona główna i nagłówek wyników) */
+const boxes=[];
+function makeSearch(host){
+  host.innerHTML=`<div class="field"><input type="search" placeholder="Wpisz nazwę lub frazę" autocomplete="off" aria-label="Szukaj" autofocus/>
+    <button type="button" class="clr" aria-label="Wyczyść" hidden>${ICON_X}</button>
+    <button type="button" class="go" aria-label="Szukaj">${ICON_S}</button></div><ul class="sug" role="listbox"></ul>`;
+  const b={field:host.querySelector(".field"),input:host.querySelector("input"),clr:host.querySelector(".clr"),
+           go:host.querySelector(".go"),sug:host.querySelector(".sug"),sel:-1,timer:0};
+  b.input.addEventListener("input",()=>{syncInputs(b.input.value,b);b.clr.hidden=!b.input.value;suggest(b);});
+  b.input.addEventListener("keydown",e=>{
+    const items=[...b.sug.children];
+    if(e.key==="ArrowDown"||e.key==="ArrowUp"){
+      if(!items.length)return;e.preventDefault();
+      b.sel=(b.sel+(e.key==="ArrowDown"?1:-1)+items.length)%items.length;
+      items.forEach((li,i)=>li.classList.toggle("sel",i===b.sel));
+      b.input.value=items[b.sel].textContent;syncInputs(b.input.value,b);
+    }else if(e.key==="Enter"){e.preventDefault();hideSug();run(b.input.value);}
+    else if(e.key==="Escape")hideSug();
+  });
+  b.input.addEventListener("blur",()=>setTimeout(hideSug,150));
+  b.clr.onclick=()=>{b.input.value="";syncInputs("",b);b.clr.hidden=true;b.input.focus();hideSug();};
+  b.go.onclick=()=>run(b.input.value);
+  boxes.push(b);return b;
+}
+function syncInputs(v,from){for(const b of boxes)if(b!==from){b.input.value=v;b.clr.hidden=!v;}}
+function hideSug(){for(const b of boxes){b.sug.classList.remove("show");b.field.classList.remove("open");b.sel=-1;}}
+makeSearch($("rowBig"));makeSearch($("rowSmall"));
+$("goBtn").onclick=()=>run(boxes[0].input.value);
+
+/* ustawienia */
+function store(k,v){try{if(v===undefined)return JSON.parse(localStorage.getItem(k));localStorage.setItem(k,JSON.stringify(v));}catch(_){return null;}}
+const langSel=$("langSel");langSel.value=store("qa_lang")||"pl";
+langSel.onchange=()=>{store("qa_lang",langSel.value);const q=boxes[0].input.value.trim();if(!$("page").classList.contains("home")&&q)run(q);};
+function drawHist(){
+  const h=$("hist");h.innerHTML="";
+  for(const q of store("qa_hist")||[]){const b=mk("button","pill",q);b.type="button";b.onclick=()=>run(q);h.appendChild(b);}
+}
+drawHist();
+
+/* ---------- dane (API) ---------- */
+const cache=new Map();
+async function api(params){
+  const url=`https://${langSel.value}.wikipedia.org/w/api.php?`+new URLSearchParams({format:"json",origin:"*",...params});
+  if(cache.has(url))return cache.get(url);
+  const r=await fetch(url);if(!r.ok)throw new Error(r.status);
+  const d=await r.json();cache.set(url,d);return d;
+}
+const PROPS={prop:"extracts|pageimages",exintro:"1",explaintext:"1",exsentences:"3",exlimit:"max",piprop:"thumbnail",pithumbsize:"240"};
+const toItems=d=>Object.values(d?.query?.pages||{}).sort((a,b)=>(a.index||0)-(b.index||0))
+  .map(p=>({title:p.title,text:p.extract||"",thumb:p.thumbnail?.source||""}));
+async function search(q,off){
+  const d=await api({action:"query",generator:"search",gsrsearch:q,gsrlimit:"10",gsroffset:String(off),...PROPS});
+  return {items:toItems(d),next:d?.continue?.gsroffset??null};
+}
+async function random(){
+  const d=await api({action:"query",generator:"random",grnnamespace:"0",grnlimit:"1",rnd:String(Math.random()),...PROPS});
+  return toItems(d);
+}
+async function article(title){
+  const d=await api({action:"query",prop:"extracts|pageimages",explaintext:"1",exsectionformat:"wiki",piprop:"thumbnail",pithumbsize:"480",titles:title,redirects:"1"});
+  const p=Object.values(d.query.pages)[0];return {text:p?.extract||"",thumb:p?.thumbnail?.source||""};
+}
+const related=title=>api({action:"query",list:"search",srsearch:"morelike:"+title,srlimit:"8",srprop:""}).then(d=>(d.query?.search||[]).map(s=>s.title));
+
+/* ---------- podpowiedzi ---------- */
+function suggest(b){
+  clearTimeout(b.timer);const q=b.input.value.trim();
+  if(q.length<2){hideSug();return;}
+  b.timer=setTimeout(async()=>{
+    try{
+      const d=await api({action:"opensearch",search:q,limit:"7",namespace:"0"});
+      b.sug.innerHTML="";b.sel=-1;
+      for(const t of d[1]||[]){
+        const li=mk("li");li.innerHTML=ICON_S;li.appendChild(document.createTextNode(t));li.setAttribute("role","option");
+        li.onmousedown=e=>{e.preventDefault();b.input.value=t;syncInputs(t,b);hideSug();run(t);};b.sug.appendChild(li);
+      }
+      const on=b.sug.children.length>0&&document.activeElement===b.input;
+      b.sug.classList.toggle("show",on);b.field.classList.toggle("open",on);
+    }catch(_){}
+  },200);
+}
+
+/* ---------- wyniki ---------- */
+let runId=0;
+const seen=new Set();
+function showResults(){
+  $("page").className="page results-mode";$("main").hidden=false;
+}
+function goHome(){
+  runId++;$("page").className="page home";$("main").hidden=true;
+  for(const b of boxes){b.input.value="";b.clr.hidden=true;}
+  boxes[0].input.focus();drawHist();
+}
+$("logoBig").onclick=$("logoSmall").onclick=goHome;
+
+function card(it,q){
+  const r=mk("div","res"+(seen.has(it.title)?" seen":""));
+  const t=mk("div","t");
+  t.appendChild(mk("div","crumb","✠ QuitArch-Info › "+it.title));
+  const h=mk("h3"),btn=mk("button",null,it.title);btn.type="button";h.appendChild(btn);t.appendChild(h);
+  t.appendChild(mk("p",null,it.text.length>240?it.text.slice(0,240).replace(/\s+\S*$/,"")+"…":it.text));
+  r.appendChild(t);
+  const open=()=>{seen.add(it.title);r.classList.add("seen");openDialog(it);};
+  btn.onclick=open;
+  if(it.thumb){const im=mk("img");im.src=it.thumb;im.alt="";im.loading="lazy";im.onclick=open;r.appendChild(im);}
+  return r;
+}
+async function run(raw){
+  const q=(raw||"").trim();
+  if(!q){goHome();return;}
+  const id=++runId;
+  for(const b of boxes){b.input.value=q;b.clr.hidden=false;}hideSug();
+  document.activeElement?.blur();
+  let h=store("qa_hist")||[];store("qa_hist",[q,...h.filter(x=>x!==q)].slice(0,10));
+  showResults();$("list").innerHTML="";$("more").innerHTML="";$("count").textContent="Szukanie…";
+  try{
+    const res=await search(q,0);if(id!==runId)return;
+    if(!res.items.length){$("count").textContent="";$("list").appendChild(mk("div","empty","Brak informacji dla zapytania „"+q+"”. Sprawdź pisownię lub spróbuj innych słów."));return;}
+    $("count").textContent=`Znaleziono informacje: ${res.items.length}${res.next!==null?"+":""}`;
+    for(const it of res.items)$("list").appendChild(card(it,q));
+    pager(q,res.next,id);
+  }catch(_){if(id===runId)$("count").textContent="Nie udało się pobrać danych. Sprawdź połączenie z internetem.";}
+}
+function pager(q,next,id){
+  $("more").innerHTML="";if(next===null)return;
+  const b=mk("button","btn alt","Więcej wyników");b.type="button";
+  b.onclick=async()=>{
+    b.disabled=true;b.textContent="Ładowanie…";
+    try{const r=await search(q,next);if(id!==runId)return;for(const it of r.items)$("list").appendChild(card(it,q));pager(q,r.next,id);}
+    catch(_){b.disabled=false;b.textContent="Błąd — spróbuj ponownie";}
+  };
+  $("more").appendChild(b);
+}
+$("luckyBtn").onclick=async()=>{
+  try{const [it]=await random();if(it){showResults();$("count").textContent="Losowa informacja";$("list").innerHTML="";$("more").innerHTML="";
+    for(const b of boxes){b.input.value=it.title;b.clr.hidden=false;}
+    $("list").appendChild(card(it,""));openDialog(it);}}
+  catch(_){alert("Nie udało się pobrać danych. Sprawdź połączenie z internetem.");}
+};
+
+/* ---------- okno dialogowe z pełnym tekstem ---------- */
+const dlg=$("dlg"),dlgBody=$("dlgBody");
+dlg.addEventListener("click",e=>{if(e.target===dlg)dlg.close();});
+$("dlgClose").onclick=()=>dlg.close();
+const SKIP=/^(przypisy|bibliografia|linki zewnętrzne|zobacz też|uwagi|literatura|references|external links|see also|notes|further reading|bibliography|einzelnachweise|weblinks|literatur|notes et références|liens externes|référence|referencias|enlaces externos|note|collegamenti esterni|odkazy|poznámky|примітки|посилання|примечания|ссылки)$/i;
+function renderText(text,box){
+  let skip=false,buf=[];
+  const flush=()=>{const s=buf.join("\n").trim();if(s&&!skip)box.appendChild(mk("p",null,s));buf=[];};
+  for(const line of text.split("\n")){
+    const m=line.match(/^(={2,})\s*(.+?)\s*\1\s*$/);
+    if(m){flush();const name=m[2];
+      if(m[1].length===2)skip=SKIP.test(name);
+      if(!skip)box.appendChild(mk(m[1].length===2?"h3":"h4",null,name));}
+    else buf.push(line);
+  }
+  flush();
+}
+async function openDialog(it){
+  $("dlgTitle").textContent=it.title;dlgBody.innerHTML="";dlgBody.appendChild(mk("p","loading","Ładowanie informacji…"));
+  if(!dlg.open)dlg.showModal();dlgBody.scrollTop=0;
+  try{
+    const a=await article(it.title),box=mk("div");
+    const lead=mk("div","lead"),src=a.thumb||it.thumb;
+    if(src){const im=mk("img");im.src=src;im.alt=it.title;lead.appendChild(im);box.appendChild(lead);}
+    renderText(a.text||it.text,lead.children.length?lead:box);
+    dlgBody.innerHTML="";dlgBody.appendChild(box);
+    const rel=await related(it.title).catch(()=>[]),list=rel.filter(t=>t!==it.title);
+    if(list.length){
+      const w=mk("div","rel");w.appendChild(mk("b",null,"Powiązane tematy"));
+      const c=mk("div","chips");
+      for(const t of list){const p=mk("button","pill",t);p.type="button";p.onclick=()=>{seen.add(t);openDialog({title:t,text:"",thumb:""});};c.appendChild(p);}
+      w.appendChild(c);dlgBody.appendChild(w);
+    }
+  }catch(_){dlgBody.innerHTML="";dlgBody.appendChild(mk("p",null,it.text||"Nie udało się pobrać informacji."));}
+}
+</script>
+</body>
+</html>
